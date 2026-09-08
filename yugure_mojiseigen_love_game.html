@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>放課後、ことばは一度だけ。</title>
+  <style>
+    :root { --ink:#392843; --paper:#fff8e9; --orange:#f28b4b; --sun:#ffd17a; --violet:#6c4a8e; --used:#766e7d; --danger:#bd3d58; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:linear-gradient(145deg,#e98357 0%,#e9a26c 31%,#9c6494 68%,#402d61 100%); overflow-x:hidden; }
+    body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.5; background:radial-gradient(circle at 18% 7%,#fff2b2 0 1%,transparent 22%),linear-gradient(180deg,transparent 61%,rgba(41,26,55,.28) 61.5%,transparent 62%); }
+    .app { position:relative; width:min(1240px,calc(100% - 32px)); min-height:100vh; margin:auto; padding:28px 0 22px; display:grid; grid-template-columns:minmax(0,1.22fr) minmax(360px,.78fr); grid-template-rows:auto 1fr auto; gap:18px; }
+    .title { grid-column:1/-1; text-align:center; color:#fff9ea; text-shadow:0 2px 12px rgba(49,27,57,.35); }
+    h1 { font-family:serif; margin:0; font-size:clamp(1.5rem,3vw,2.35rem); letter-spacing:.11em; }
+    .subtitle { margin:7px 0 0; font-size:.82rem; letter-spacing:.12em; opacity:.9; }
+    .panel { border:1px solid rgba(255,255,255,.54); background:rgba(255,249,234,.88); box-shadow:0 14px 35px rgba(45,27,53,.24); backdrop-filter:blur(4px); }
+    .conversation { border-radius:20px; padding:18px; display:flex; flex-direction:column; min-height:480px; overflow:hidden; }
+    .status { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:end; padding-bottom:15px; border-bottom:1px dashed #d3a57a; }
+    .status-label { font-size:.77rem; letter-spacing:.08em; color:#765466; }
+    .mood-number { float:right; font-weight:800; color:var(--orange); font-size:1.05rem; }
+    .meter { height:13px; margin-top:7px; border-radius:999px; overflow:hidden; background:#e1cfcb; box-shadow:inset 0 1px 3px #c4aaa5; }
+    .meter > span { display:block; height:100%; width:100%; border-radius:inherit; background:linear-gradient(90deg,#db5570,#f49b4e,#ffd477); transition:width .45s ease; }
+    .turn { font-weight:bold; text-align:right; color:var(--violet); white-space:nowrap; }
+    .turn strong { display:block; font-size:1.55rem; line-height:1; }
+    .history { flex:1; overflow-y:auto; padding:16px 3px 4px; display:flex; flex-direction:column; gap:13px; }
+    .bubble { position:relative; max-width:82%; padding:11px 14px; border-radius:15px; line-height:1.55; font-size:.95rem; box-shadow:0 2px 6px rgba(71,44,65,.11); animation:appear .25s ease-out; }
+    @keyframes appear { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
+    .heroine { align-self:flex-start; background:#fff; border-bottom-left-radius:3px; }
+    .heroine::before { content:"栞"; display:block; margin-bottom:4px; color:#a26a7b; font-weight:bold; font-size:.72rem; }
+    .player { align-self:flex-end; background:#f9bf62; border-bottom-right-radius:3px; }
+    .player::before { content:"あなた"; display:block; margin-bottom:3px; color:#805633; font-size:.7rem; }
+    .kana-panel { border-radius:20px; padding:18px; overflow:auto; }
+    .kana-panel h2 { margin:0 0 4px; font-size:1.08rem; font-family:serif; letter-spacing:.08em; }
+    .kana-note { margin:0 0 13px; color:#765466; font-size:.76rem; line-height:1.5; }
+    .kana-section { margin-top:12px; }
+    .kana-section h3 { margin:0 0 6px; padding-left:8px; border-left:3px solid var(--orange); font-size:.78rem; color:#765466; }
+    .kana-grid { display:grid; grid-template-columns:repeat(5,minmax(32px,1fr)); gap:5px; }
+    .kana { display:grid; place-items:center; min-height:35px; border:1px solid #d7bca7; border-radius:7px; background:#fffdf7; font-weight:bold; font-size:.95rem; transition:.2s; }
+    .kana.used { color:#bdb7bf; background:#827a85; border-color:#827a85; text-decoration:line-through; opacity:.72; }
+    .composer { grid-column:1/-1; border-radius:18px; padding:13px; display:grid; grid-template-columns:1fr auto auto; gap:9px; background:rgba(52,35,67,.88); box-shadow:0 8px 24px rgba(39,22,46,.26); }
+    .composer input { min-width:0; padding:13px 15px; border:2px solid transparent; border-radius:11px; outline:none; color:var(--ink); font:inherit; background:#fffdf4; }
+    .composer input:focus { border-color:#ffc56a; }
+    button { border:0; border-radius:11px; padding:0 17px; color:#fff; cursor:pointer; font:700 .86rem inherit; transition:transform .15s,filter .15s; }
+    button:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    #sendButton { background:var(--orange); } #giveUpButton { background:#82576c; }
+    .input-note { grid-column:1/-1; margin:0 2px; color:#eadde7; font-size:.72rem; }
+    .invalid-message { min-height:1.1em; margin:0; color:#ffd49d; font-size:.75rem; }
+    .overlay { display:none; position:fixed; z-index:5; inset:0; place-items:center; padding:22px; background:rgba(25,14,37,.77); }
+    .overlay.show { display:grid; }
+    .result { width:min(440px,100%); text-align:center; padding:32px 28px; border:1px solid rgba(255,237,190,.6); border-radius:22px; background:linear-gradient(145deg,#fff8e8,#f0c38b); box-shadow:0 20px 60px #170d22; }
+    .result h2 { margin:0; font-family:serif; letter-spacing:.13em; color:var(--violet); }
+    .result .result-title { margin:10px 0 23px; color:#81566e; font-weight:bold; }
+    .result dl { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; text-align:left; margin:0; padding:15px 0; border-top:1px solid #d6a57b; border-bottom:1px solid #d6a57b; }
+    .result dt { color:#805a63; font-size:.85rem; } .result dd { margin:0; text-align:right; font-weight:bold; }
+    .rank { margin:18px 0 0; font-family:serif; font-size:1.15rem; color:var(--violet); } .rank b { font-size:2rem; }
+    @media (max-width:780px) { .app { width:min(100% - 20px,620px); grid-template-columns:1fr; padding-top:18px; } .conversation { min-height:420px; } .kana-panel { max-height:425px; } .composer { grid-column:1; grid-template-columns:1fr auto; } #giveUpButton { grid-column:2; grid-row:1; } #sendButton { grid-column:2; grid-row:1; margin-right:88px; } .input-note,.invalid-message { grid-column:1/-1; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="title"><h1>放課後、ことばは一度だけ。</h1><p class="subtitle">— ひらがなを大切に使って、栞と10回の会話をしよう —</p></header>
+    <section class="conversation panel" aria-label="会話とステータス">
+      <div class="status"><div><div class="status-label">栞のご機嫌 <span id="moodNumber" class="mood-number">100 / 100</span></div><div class="meter"><span id="moodBar"></span></div></div><div class="turn">TURN<strong><span id="turnNumber">1</span> / 10</strong></div></div>
+      <div id="history" class="history" aria-live="polite"></div>
+    </section>
+    <aside class="kana-panel panel"><h2>あいうえお表</h2><p class="kana-note">一度使った文字は、もう使えない。濁点・半濁点・小文字は別の文字として扱われます。</p><div id="kanaTable"></div></aside>
+    <form id="composer" class="composer" autocomplete="off"><input id="messageInput" type="text" inputmode="kana" maxlength="40" placeholder="ひらがなだけで話しかけよう" aria-label="メッセージ"><button id="sendButton" type="submit">送信</button><button id="giveUpButton" type="button">ギブアップ</button><p class="input-note">※ 濁点・半濁点・小文字は1文字ごとにご機嫌 -5</p><p id="invalidMessage" class="invalid-message" aria-live="polite"></p></form>
+  </main>
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="resultHeading"><section class="result"><h2 id="resultHeading">結果</h2><p id="resultTitle" class="result-title"></p><dl><dt>生き残ったターン数</dt><dd id="resultTurns"></dd><dt>消費した総文字数</dt><dd id="resultCharacters"></dd><dt>最終的なご機嫌</dt><dd id="resultMood"></dd></dl><p id="rankLine" class="rank"></p></section></div>
+  <script>
+    const kanaGroups = [
+      { label:'清音', chars:['あ','い','う','え','お','か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と','な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も','や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん'] },
+      { label:'濁点', chars:['が','ぎ','ぐ','げ','ご','ざ','じ','ず','ぜ','ぞ','だ','ぢ','づ','で','ど','ば','び','ぶ','べ','ぼ'] },
+      { label:'半濁点', chars:['ぱ','ぴ','ぷ','ぺ','ぽ'] },
+      { label:'小文字', chars:['ぁ','ぃ','ぅ','ぇ','ぉ','っ','ゃ','ゅ','ょ'] }
+    ];
+    const allowedCharacters = new Set(kanaGroups.flatMap(group => group.chars));
+    const specialCharacters = new Set(kanaGroups.slice(1).flatMap(group => group.chars));
+    const usedCharacters = new Set();
+    // http://localhost:3000 で下記の groq-server.mjs を起動するとGroqを使用します。
+    // HTMLを直接ダブルクリックで開いた場合は、APIキーを必要としないモック処理のまま遊べます。
+    const HEROINE_API_ENDPOINT = /^https?:$/.test(location.protocol) ? '/api/heroine' : '';
+    let mood = 100, turn = 1, completedTurns = 0, totalCharacters = 0, gameEnded = false, isComposing = false;
+    const $ = id => document.getElementById(id);
+    const history = $('history'), input = $('messageInput'), sendButton = $('sendButton');
+
+    function buildKanaTable() {
+      $('kanaTable').innerHTML = kanaGroups.map(group => `<section class="kana-section"><h3>${group.label}</h3><div class="kana-grid">${group.chars.map(char => `<span class="kana" id="kana-${char}">${char}</span>`).join('')}</div></section>`).join('');
+    }
+    function addBubble(text, speaker) { const bubble = document.createElement('div'); bubble.className = `bubble ${speaker}`; bubble.textContent = text; history.append(bubble); history.scrollTop = history.scrollHeight; }
+    function updateStatus() { $('moodNumber').textContent = `${Math.max(0,mood)} / 100`; $('moodBar').style.width = `${Math.max(0,Math.min(100,mood))}%`; $('turnNumber').textContent = Math.min(turn,10); }
+    function setControls(disabled) { input.disabled = disabled; sendButton.disabled = disabled; $('giveUpButton').disabled = disabled; }
+    function characterRank() { if (mood >= 80) return 'S'; if (mood >= 55) return 'A'; if (mood >= 30) return 'B'; return 'C'; }
+
+    // Gemini中継サーバーが利用できる時は実APIを使い、それ以外ではモックで遊べます。
+    async function fetchHeroineResponse(inputText) {
+      if (HEROINE_API_ENDPOINT) {
+        try {
+          const apiResponse = await fetch(HEROINE_API_ENDPOINT, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inputText, turn, mood, usedCharacters: [...usedCharacters] })
+          });
+          if (!apiResponse.ok) {
+            const errorBody = await apiResponse.json().catch(() => ({}));
+            throw new Error(errorBody.error || `API error: ${apiResponse.status}`);
+          }
+          const data = await apiResponse.json();
+          if (typeof data.dialogue !== 'string' || !Number.isFinite(data.mood_impact)) throw new Error('Invalid API response');
+          return data;
+        } catch (error) {
+          console.warn('Groqとの通信に失敗したため、モック応答に切り替えました。', error);
+          $('invalidMessage').textContent = `Groqエラー: ${error.message}（モック応答で続けます）`;
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 520));
+      if (inputText.length <= 2) return { naturalness_score:25, mood_impact:-14, dialogue:'えっと……もう少し聞かせて？ それだけだと、どう返せばいいか迷っちゃう。' };
+      if (inputText.length <= 4) return { naturalness_score:56, mood_impact:-3, dialogue:'うん、聞こえたよ。でも、少しだけ言葉が足りない気がするな。' };
+      if (/(すき|うれし|たのし|ありがとう|きれい|だいじ)/.test(inputText)) return { naturalness_score:92, mood_impact:13, dialogue:'……そんなふうに言ってくれるんだ。なんだか、夕焼けまできれいに見えてきた。' };
+      if (inputText.length >= 12) return { naturalness_score:86, mood_impact:8, dialogue:'ちゃんと考えて話してくれたの、伝わったよ。続きを聞かせて。' };
+      return { naturalness_score:74, mood_impact:5, dialogue:'そうなんだ。あなたと話していると、放課後が少し長くなるみたい。' };
+    }
+
+    function finishGame(cleared) {
+      gameEnded = true; setControls(true);
+      $('resultTitle').textContent = cleared ? 'CLEAR — 栞との放課後は、まだ続く。' : 'GAME OVER — 言葉は、夕暮れに溶けていった。';
+      $('resultTurns').textContent = `${completedTurns} / 10`;
+      $('resultCharacters').textContent = `${totalCharacters} 文字`;
+      $('resultMood').textContent = `${Math.max(0,mood)} / 100`;
+      $('rankLine').innerHTML = cleared ? `評価ランク　<b>${characterRank()}</b>` : '';
+      $('overlay').classList.add('show');
+    }
+    $('composer').addEventListener('submit', async event => {
+      event.preventDefault(); if (gameEnded) return;
+      if (isComposing) { $('invalidMessage').textContent = '変換を確定してから送信してください。'; return; }
+      const text = input.value;
+      const chars = [...text];
+      if (!text) { alert('ひらがなでメッセージを入力してください。'); return; }
+      if (chars.some(char => !allowedCharacters.has(char))) { alert('使用できるのは、表にあるひらがなのみです。'); return; }
+      const duplicate = chars.find((char, index) => chars.indexOf(char) !== index || usedCharacters.has(char));
+      if (duplicate) { alert(`「${duplicate}」はすでに使用済みです。同じ文字は1プレイに1回しか使えません。`); return; }
+      chars.forEach(char => { usedCharacters.add(char); $(`kana-${char}`).classList.add('used'); });
+      totalCharacters += chars.length;
+      const penalty = chars.filter(char => specialCharacters.has(char)).length * -5;
+      addBubble(text,'player'); input.value = ''; setControls(true);
+      addBubble('栞が返事を考えています……','heroine');
+      const pending = history.lastElementChild;
+      const response = await fetchHeroineResponse(text);
+      pending.remove(); addBubble(response.dialogue,'heroine');
+      mood += response.mood_impact + penalty; completedTurns++; turn++; updateStatus();
+      if (mood <= 0) finishGame(false);
+      else if (completedTurns === 10) finishGame(true);
+      else { setControls(false); input.focus(); }
+    });
+    function restrictToKana() {
+      const cleaned = [...input.value].filter(char => allowedCharacters.has(char)).join('');
+      const changed = cleaned !== input.value; input.value = cleaned;
+      $('invalidMessage').textContent = changed ? 'ひらがな以外の文字は入力できません。' : '';
+    }
+    // 日本語IMEは「k」「ka」のような変換途中の文字を一時的にフォームへ入れる。
+    // その間は消さず、変換確定後にだけひらがなチェックを適用する。
+    input.addEventListener('compositionstart', () => { isComposing = true; });
+    input.addEventListener('compositionend', () => { isComposing = false; restrictToKana(); });
+    input.addEventListener('input', () => { if (!isComposing) restrictToKana(); });
+    $('giveUpButton').addEventListener('click', () => { if (!gameEnded && confirm('本当にギブアップしますか？')) finishGame(false); });
+    buildKanaTable(); updateStatus(); addBubble('あ、来てくれたんだ。今日は……10回だけ、わたしと話してくれる？', 'heroine'); input.focus();
+  </script>
+</body>
+</html>
